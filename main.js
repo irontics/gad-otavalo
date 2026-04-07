@@ -209,15 +209,35 @@ window.quitarFoto = function(index) {
 
 // --- SUBIDA AL STORAGE ---
 async function subirFoto(archivo) {
-    const nombreArchivo = `${Date.now()}_${archivo.name || 'foto.jpg'}`;
-    const { data, error } = await supabase.storage
-        .from('fotos_reportes')
-        .upload(nombreArchivo, archivo);
-    
-    if (error) throw new Error("Error al subir una de las imágenes");
-    
-    const { data: urlData } = supabase.storage.from('fotos_reportes').getPublicUrl(nombreArchivo);
-    return urlData.publicUrl;
+    try {
+        // 1. Comprimir (usando tu lógica original para no inventar)
+        const base64 = await new Promise(res => {
+            const r = new FileReader();
+            r.onload = (e) => res(e.target.result);
+            r.readAsDataURL(archivo);
+        });
+        const comprimidaB64 = await comprimirImagen(base64);
+
+        // 2. Convertir a formato compatible (File) para evitar Error 400
+        const res = await fetch(comprimidaB64);
+        const blob = await res.blob();
+        const archivoFinal = new File([blob], `${Date.now()}.jpg`, { type: "image/jpeg" });
+
+        const nombreArchivo = `${Date.now()}_reporte.jpg`;
+
+        // 3. Subida directa
+        const { data, error } = await supabase.storage
+            .from('fotos_reportes')
+            .upload(nombreArchivo, archivoFinal); // Enviamos el File object
+
+        if (error) throw error;
+
+        const { data: urlData } = supabase.storage.from('fotos_reportes').getPublicUrl(nombreArchivo);
+        return urlData.publicUrl;
+    } catch (err) {
+        console.error("Error crítico en subida:", err);
+        throw err;
+    }
 }
 
 // 2. GPS (CORREGIDO)
@@ -326,7 +346,7 @@ window.enviarReporte = async function() {
         }]);
 
         if (error) throw error;
-        alert("✅ Reporte enviado con éxito.");
+        alert("✅ Reporte enviado con éxito. Su novedad será atendida lo antes posible.");
         location.reload(); 
 
     } catch (e) {

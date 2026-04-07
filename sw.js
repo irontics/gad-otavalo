@@ -1,34 +1,28 @@
-// 🔹 Versión automática (evita conflictos siempre)
-const CACHE_NAME = 'gad-Otavalo-' + Date.now();
+// 🔹 Nombre fijo para evitar bucles infinitos de instalación
+const CACHE_NAME = 'gad-Otavalo-v1.0.4'; 
 
-// 🔹 Solo archivos estáticos (NO HTML dinámico)
 const STATIC_ASSETS = [
   './',
   './index.html',
   './main.js',
-  './manifest.json',
-  './logo.png'
+  './manifest.json'
 ];
 
 // 🔹 INSTALACIÓN
 self.addEventListener('install', event => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(STATIC_ASSETS);
-    })
+    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
   );
 });
 
-// 🔹 ACTIVACIÓN (limpia versiones viejas)
+// 🔹 ACTIVACIÓN (Limpia versiones antiguas solo cuando cambies el nombre arriba)
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => {
       return Promise.all(
         keys.map(key => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
+          if (key !== CACHE_NAME) return caches.delete(key);
         })
       );
     })
@@ -36,29 +30,27 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// 🔹 FETCH (network-first INTELIGENTE)
+// 🔹 FETCH (Estrategia Cache-First para velocidad, Network-First para datos)
 self.addEventListener('fetch', event => {
-  const url = event.request.url;
+  const url = new URL(event.request.url);
 
-  // ❌ NO cachear Supabase ni APIs
-  if (url.includes('supabase.co')) return;
+  // 1. OMITIR SUPABASE: No interferir con la base de datos ni autenticación
+  if (url.hostname.includes('supabase.co')) return;
 
-  // ❌ NO cachear HTML dinámico (evita bugs)
-  if (event.request.headers.get('accept')?.includes('text/html')) {
-    event.respondWith(fetch(event.request));
-    return;
-  }
-
-  // ✅ Estrategia: network first
+  // 2. ESTRATEGIA PARA ARCHIVOS ESTÁTICOS (JS, CSS, HTML, Imágenes locales)
+  // Cargan instantáneamente desde el caché
   event.respondWith(
-    fetch(event.request)
-      .then(response => {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then(cache => {
-          cache.put(event.request, clone);
-        });
-        return response;
-      })
-      .catch(() => caches.match(event.request))
+    caches.match(event.request).then(cachedResponse => {
+      if (cachedResponse) return cachedResponse;
+
+      return fetch(event.request).then(networkResponse => {
+        // Solo cachear respuestas válidas de nuestro propio dominio
+        if (networkResponse && networkResponse.status === 200 && url.origin === self.location.origin) {
+          const clone = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        }
+        return networkResponse;
+      });
+    })
   );
 });
