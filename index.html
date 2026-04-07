@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Otavalo Digital</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#228B22"> 
+   <meta name="theme-color" content="#228B22"> <meta name="theme-color" content="#1D4ED8">
     <link rel="icon" type="image/png" href="logo.png">
     <link rel="apple-touch-icon" href="logo.png">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -137,7 +137,7 @@ button[title]:hover::after {
                 <input type="file" id="fotoInput" accept="image/*" capture="camera" class="hidden">
                 
                 <button type="button" id="btnCapturar" onclick="document.getElementById('fotoInput').click()" 
-                    class="w-full p-3 border-2 border-dashed border-blue-300 rounded-lg text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 transition flex items-center justify-center gap-2">
+                    class="w-full p-3 rounded-lg text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 transition flex items-center justify-center gap-2">
                     <span>➕ AÑADIR FOTO</span>
                 </button>
 
@@ -145,7 +145,7 @@ button[title]:hover::after {
                     </div>
             </div>
 
-            <button onclick="enviarReporte()" class="w-full bg-red-700 text-white font-bold py-3 rounded-lg shadow-md hover:bg-blue-800 transition">
+            <button onclick="enviarReporte()" class="w-full bg-red-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-red-800 transition">
                 Enviar al GAD
             </button>
         </div>
