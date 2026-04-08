@@ -47,9 +47,12 @@ nombreInput.addEventListener('input', (e) => {
     // 2. Convierte todo a MAYÚSCULAS automáticamente
     e.target.value = valor.toUpperCase();
 });
+
 cedulaInput.addEventListener('input', async (e) => {
-            const ci = e.target.value;
-            
+     
+  const ci = e.target.value;
+  const btnMis = document.getElementById('btnMisReportes');
+   
             // Limpieza de estilos cada vez que escribe
             cedulaInput.classList.remove('border-red-500', 'border-green-500', 'ring-2', 'ring-red-200', 'border-blue-500');
 
@@ -76,12 +79,17 @@ cedulaInput.addEventListener('input', async (e) => {
                         nombreInput.value = data.nombre_completo;
                         nombreInput.disabled = true;
                         nombreInput.classList.add('bg-gray-100', 'font-bold', 'text-blue-900');
+// SI CIUDADANO EXISTE HABILITAMOS BOTON REPORTE
+if (btnMis) btnMis.classList.remove('hidden');
+
+
                     } else {
                         nombreInput.value = "";
                         nombreInput.disabled = false;
                         nombreInput.placeholder = "Ciudadano nuevo: Ingrese Nombre";
                         nombreInput.classList.remove('bg-gray-100');
                         nombreInput.focus();
+                        if (btnMis) btnMis.classList.add('hidden'); // Asegurar que esté oculto si es nuevo
                     }
                 } else {
                     // CÉDULA INVÁLIDA (No pasa el algoritmo)
@@ -96,6 +104,7 @@ cedulaInput.addEventListener('input', async (e) => {
                 nombreInput.disabled = true;
                 nombreInput.classList.add('bg-gray-100');
                 nombreInput.placeholder = "Ingrese cédula primero...";
+                if (btnMis) btnMis.classList.add('hidden'); // Ocultar si borra la cédula
             }
         });
     }
@@ -346,7 +355,7 @@ window.enviarReporte = async function() {
         }]);
 
         if (error) throw error;
-        alert("✅ Reporte enviado con éxito. Su novedad será atendida lo antes posible.");
+        alert("✅ Reporte enviado con éxito. SU NOVEDAD SERÁ ANTENDIA LO MÁS PRONTO POSIBLE");
         location.reload(); 
 
     } catch (e) {
@@ -904,6 +913,92 @@ if ('serviceWorker' in navigator) {
 
     });
 }
+//=================================================================================
+// MENU MODAL PARA EL CIUDADANO Y SUS REPORTES
+//=================================================================================
+window.mostrarMisReportes = async () => {
+    const ci = document.getElementById('cedula').value;
+    if (!ci) return;
+
+    const { data, error } = await supabase
+        .from('reportes')
+        .select('created_at, sector, descripcion, estado, motivo_accion')
+        .eq('cedula_ciudadano', ci)
+        .order('created_at', { ascending: false });
+
+    if (error) return alert("Error al consultar reportes");
+
+    let html = `
+        <div class="p-5">
+            <h2 class="text-blue-900 font-black text-sm uppercase mb-4 flex items-center gap-2 border-b pb-2">
+                📂 Seguimiento a mis reportes
+            </h2>
+            
+            <div class="overflow-x-auto">
+                <div class="max-h-[400px] overflow-y-auto pr-2 custom-scroll">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="sticky top-0 bg-gray-150 z-10">
+                            <tr class="text-[10px] uppercase text-gray-1000 border-b">
+                                <th class="py-2 px-2">Fecha</th>
+                                <th class="py-2 px-2">Novedad</th>
+                                <th class="py-2 px-2 text-center">Sector</th>
+                                <th class="py-2 px-2 text-center">Estado</th>
+                                <th class="py-2 px-2">Respuesta Técnica</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-150">
+    `;
+
+    if (data.length === 0) {
+        html += `<tr><td colspan="5" class="text-center py-10 text-gray-400 italic text-xs">No hay registros</td></tr>`;
+    } else {
+        data.forEach(r => {
+            const colorEstado = r.estado === 'Atendido' ? 'text-green-600 bg-green-50' : (r.estado === 'Cancelado' ? 'text-red-600 bg-red-50' : 'text-amber-600 bg-amber-50');
+            
+            html += `
+                <tr class="text-[11px] hover:bg-blue-50/30 transition-colors">
+                    <td class="py-3 px-2 text-gray-500 whitespace-nowrap">${new Date(r.created_at).toLocaleDateString()}</td>
+                    <td class="py-3 px-2 text-gray-700 font-medium leading-tight">${r.descripcion || 'Sin detalle'}</td>
+                    <td class="py-3 px-2 text-center uppercase font-bold text-gray-400">${r.sector}</td>
+                    <td class="py-3 px-2 text-center">
+                        <span class="px-2 py-0.5 rounded-full font-black text-[9px] ${colorEstado}">${r.estado}</span>
+                    </td>
+                    <td class="py-3 px-2">
+                        <div class="text-blue-800 italic bg-blue-50/50 p-2 rounded border-l-2 border-blue-300">
+                            ${r.motivo_accion || '<span class="text-gray-400 text-[9px]">En revisión técnica...</span>'}
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    html += `
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const modalMis = document.getElementById('modalMisReportes');
+    const contenidoDiv = document.getElementById('contenidoMisReportes');
+
+    if (modalMis && contenidoDiv) {
+        contenidoDiv.innerHTML = html;
+        modalMis.style.display = 'flex';
+        modalMis.classList.remove('hidden');
+    }
+};
+
+// Función de cierre global
+window.cerrarModalMisReportes = () => {
+    const modalMis = document.getElementById('modalMisReportes');
+    if (modalMis) {
+        modalMis.style.display = 'none';
+        modalMis.classList.add('hidden');
+    }
+};
 
 window.addEventListener('online', sincronizarPendientes);
 sincronizarPendientes();
