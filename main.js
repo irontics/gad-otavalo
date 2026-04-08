@@ -733,6 +733,10 @@ console.log("CONFIRMAR ID:", window.idReporteSeleccionado);
 
             if (!error) {
                 document.getElementById('modalGestion').style.display = 'none';
+                // Llamamos a la función que ya tienes para que refresque la tabla visualmente
+                await actualizarTabla(); 
+                
+                console.log("Tabla actualizada automáticamente tras gestión.");
             } else {
                 alert("Error al actualizar: " + error.message);
             }
