@@ -790,7 +790,7 @@ const excelTemplate = `<?xml version="1.0"?><?mso-application progid="Excel.Shee
     <Worksheet ss:Name="Reportes">
         <Table ss:ExpandedColumnCount="10">
             <Column ss:Width="110"/><Column ss:Width="130"/><Column ss:Width="100"/><Column ss:Width="200"/><Column ss:Width="80"/><Column ss:Width="80"/><Column ss:Width="80"/><Column ss:Width="150"/><Column ss:Width="150"/><Column ss:Width="80"/>
-            <Row ss:Height="30"><Cell ss:MergeAcross="9" ss:StyleID="sTitulo"><Data ss:Type="String">🛡️ REPORTE GAD PARROQUIAL DE LITA</Data></Cell></Row>
+            <Row ss:Height="30"><Cell ss:MergeAcross="9" ss:StyleID="sTitulo"><Data ss:Type="String">🛡️ REPORTE GAD OTAVALO</Data></Cell></Row>
             <Row ss:Height="20">
                 <Cell ss:StyleID="sHeader"><Data ss:Type="String">FECHA</Data></Cell>
                 <Cell ss:StyleID="sHeader"><Data ss:Type="String">CEDULA</Data></Cell>
@@ -832,7 +832,7 @@ const excelTemplate = `<?xml version="1.0"?><?mso-application progid="Excel.Shee
 const blob = new Blob([excelTemplate], { type: "application/vnd.ms-excel" });
 const link = document.createElement("a");
 link.href = URL.createObjectURL(blob);
-link.download = `Reporte_GAD_Lita.xls`;
+link.download = `Reporte_GAD_Otavalo.xls`;
 link.click();
 };
 
