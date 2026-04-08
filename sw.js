@@ -1,5 +1,4 @@
-// 🔹 Nombre fijo para evitar bucles infinitos de instalación
-const CACHE_NAME = 'gad-Otavalo-v1.0.4'; 
+const CACHE_NAME = 'gad-Otavalo-v1.0.5'; // Incrementar versión para aplicar cambios
 
 const STATIC_ASSETS = [
   './',
@@ -8,7 +7,7 @@ const STATIC_ASSETS = [
   './manifest.json'
 ];
 
-// 🔹 INSTALACIÓN
+// 🔹 INSTALACIÓN: Sin cambios, es correcta.
 self.addEventListener('install', event => {
   self.skipWaiting();
   event.waitUntil(
@@ -16,7 +15,7 @@ self.addEventListener('install', event => {
   );
 });
 
-// 🔹 ACTIVACIÓN (Limpia versiones antiguas solo cuando cambies el nombre arriba)
+// 🔹 ACTIVACIÓN: Sin cambios, limpia correctamente versiones viejas.
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => {
@@ -30,27 +29,30 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// 🔹 FETCH (Estrategia Cache-First para velocidad, Network-First para datos)
+// 🔹 FETCH: Optimizado para Actualización Invisible (Stale-While-Revalidate)
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
-  // 1. OMITIR SUPABASE: No interferir con la base de datos ni autenticación
+  // 1. OMITIR SUPABASE: Datos en tiempo real, no se cachean.
   if (url.hostname.includes('supabase.co')) return;
 
-  // 2. ESTRATEGIA PARA ARCHIVOS ESTÁTICOS (JS, CSS, HTML, Imágenes locales)
-  // Cargan instantáneamente desde el caché
+  // 2. ESTRATEGIA PROFESIONAL: Entrega rápida + Actualización en segundo plano
   event.respondWith(
     caches.match(event.request).then(cachedResponse => {
-      if (cachedResponse) return cachedResponse;
-
-      return fetch(event.request).then(networkResponse => {
-        // Solo cachear respuestas válidas de nuestro propio dominio
+      
+      // Iniciamos la búsqueda en red de todas formas para actualizar el caché
+      const networkFetch = fetch(event.request).then(networkResponse => {
         if (networkResponse && networkResponse.status === 200 && url.origin === self.location.origin) {
           const clone = networkResponse.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         }
         return networkResponse;
+      }).catch(() => {
+        // Silenciamos errores de red si estamos offline, para que no salte alerta
       });
+
+      // Retornamos la respuesta rápida (caché) o esperamos a la red si no hay nada
+      return cachedResponse || networkFetch;
     })
   );
 });
